@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+dist-ssr/
+
+# Logs
+*.log

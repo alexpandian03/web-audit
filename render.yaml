@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: sitecheck-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SEARCH_PROVIDER
+        value: serpapi
+      - key: MAX_SITES_PER_SEARCH
+        value: 40
+      - key: MONGODB_URI
+        sync: false
+      - key: SERPAPI_KEY
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: APP_ACCESS_KEY
+        sync: false

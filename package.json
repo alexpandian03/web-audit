@@ -1,0 +1,16 @@
+{
+  "name": "website-audit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"blue,green\" \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "start": "npm --prefix server start",
+    "test": "npm --prefix server test",
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "build": "npm --prefix client run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
