@@ -124,11 +124,11 @@ export function ResultsTable({ sites = [], onSelectSite, selectedSiteId, isLoadi
 
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      {/* Table responsive container with custom scrollbar */}
-      <div className="overflow-x-auto">
+      {/* Table responsive container with self-contained scroll to eliminate external overlaps */}
+      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
         <table className="w-full text-left border-collapse">
-          {/* Sticky Header so users always know column definitions while scrolling */}
-          <thead className="sticky top-16 z-20 bg-slate-50 border-b border-slate-200 shadow-2xs">
+          {/* Sticky Header stays pinned to top of table only */}
+          <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 shadow-2xs">
             <tr className="text-[11px] font-bold text-slate-500 tracking-wider uppercase select-none">
               <th className="py-3.5 px-4 sm:px-6 font-bold w-[30%] min-w-[200px]">WEBSITE</th>
               <th className="py-3.5 px-4 font-bold w-[14%] min-w-[105px]">COPYRIGHT</th>
@@ -212,9 +212,14 @@ export function ResultsTable({ sites = [], onSelectSite, selectedSiteId, isLoadi
                       <span className="text-[#007ba7] font-semibold animate-pulse">Scanning...</span>
                     ) : isPending ? (
                       <span className="text-slate-400">Queued</span>
-                    ) : site.brokenTotalCount > 0 ? (
+                    ) : site.brokenCertainCount > 0 ? (
                       <span className="inline-flex items-center gap-1">
                         <span className="text-[#ff2095] font-bold">{site.brokenCertainCount}</span>
+                        <span className="text-slate-400">/ {site.brokenTotalCount}</span>
+                      </span>
+                    ) : site.brokenTotalCount > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
+                        <span>0</span>
                         <span className="text-slate-400">/ {site.brokenTotalCount}</span>
                       </span>
                     ) : site.auditStatus === 'done' ? (
