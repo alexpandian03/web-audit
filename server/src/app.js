@@ -40,6 +40,7 @@ export function createApp({
   if (process.env.NODE_ENV !== 'production') {
     allowedOrigins.add('http://localhost:5173');
     allowedOrigins.add('http://localhost:3000');
+    allowedOrigins.add('http://localhost:3001');
   }
 
   app.use(
@@ -49,6 +50,13 @@ export function createApp({
         if (!origin) return callback(null, true);
         const cleanOrigin = origin.replace(/\/+$/, '');
         if (allowedOrigins.has(cleanOrigin)) {
+          return callback(null, true);
+        }
+        // In local development, also allow any local port (e.g. Vite running on 3001 or 5174)
+        if (
+          process.env.NODE_ENV !== 'production' &&
+          /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)
+        ) {
           return callback(null, true);
         }
         return callback(new Error(`CORS origin rejected: ${origin}`));

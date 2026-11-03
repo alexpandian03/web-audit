@@ -1,4 +1,11 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+
+// Load .env from server directory first, fallback to root cwd
+const serverEnvPath = fileURLToPath(new URL('../.env', import.meta.url));
+dotenv.config({ path: serverEnvPath });
+dotenv.config();
+
 import { createApp } from './app.js';
 import { connectDB, disconnectDB } from './db.js';
 import { recoverPendingAudits } from './services/auditQueue.js';

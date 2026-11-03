@@ -1,6 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 import Search from '../models/Search.js';
 import Site from '../models/Site.js';
 import {
@@ -38,6 +39,10 @@ export function createSearchesRouter({
   // POST /api/searches
   router.post('/', searchLimiter, async (req, res) => {
     // Reload environment variables so live changes to server/.env take effect immediately
+    try {
+      const serverEnvPath = fileURLToPath(new URL('../../.env', import.meta.url));
+      dotenv.config({ path: serverEnvPath, override: true });
+    } catch {}
     dotenv.config({ override: true });
 
     const activeProvider = provider || getActiveSearchProvider();

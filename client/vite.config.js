@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 function getBackendTarget() {
   // 1. If VITE_API_BASE is explicitly set in environment, use it
@@ -11,7 +12,7 @@ function getBackendTarget() {
 
   // 2. Read server/.env to determine which port Express is running on (e.g. 10000 or 5000)
   try {
-    const serverEnvPath = path.resolve(__dirname, '../server/.env');
+    const serverEnvPath = fileURLToPath(new URL('../server/.env', import.meta.url));
     if (fs.existsSync(serverEnvPath)) {
       const content = fs.readFileSync(serverEnvPath, 'utf-8');
       const portMatch = content.match(/^PORT\s*=\s*(\d+)/m);
@@ -37,6 +38,16 @@ export default defineConfig({
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
             console.warn(`[Vite Proxy] Target ${options.target} error: ${err.message}`);
+            if (res && !res.headersSent && typeof res.writeHead === 'function') {
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(
+                JSON.stringify({
+                  error: `Backend API server at ${options.target} is unreachable. Please verify the backend server is running.`,
+                  detail: err.message,
+                  code: 'BACKEND_UNREACHABLE',
+                })
+              );
+            }
           });
         },
       },
