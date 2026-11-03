@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Loader2, ShieldCheck, CheckCircle2, Zap, Sparkles } from 'lucide-react';
+import { Search, Loader2, ShieldCheck, Zap, Sparkles } from 'lucide-react';
 
 const SUGGESTIONS = [
   'Hospitals in Trichy',
@@ -137,36 +137,6 @@ export function SearchBar({ onSearch, isLoading }) {
                 alt="Website Audit 3D Scanner"
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-700 ease-out"
               />
-
-              {/* Floating Badge 1: Health Score */}
-              <div className="absolute top-3.5 right-3.5 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-3 py-1.5 shadow-md flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                  98%
-                </div>
-                <div>
-                  <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Health Score</div>
-                  <div className="text-[11px] font-bold text-[#0a0a0a] flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Excellent
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Badge 2: Real-time scan */}
-              <div className="absolute bottom-3.5 left-3.5 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-3 py-1.5 shadow-md flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-[#007ba7]/10 border border-[#007ba7]/20 text-[#007ba7] flex items-center justify-center">
-                  <Zap className="w-3.5 h-3.5 text-[#007ba7]" />
-                </div>
-                <div>
-                  <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Automated Audit</div>
-                  <div className="text-[11px] font-bold text-[#0a0a0a]">Up to 40 Sites / Search</div>
-                </div>
-              </div>
-
-              {/* Floating Badge 3: Broken link detection */}
-              <div className="absolute bottom-3.5 right-3.5 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-2.5 py-1.5 shadow-md flex items-center gap-1.5 text-[11px] font-bold text-[#0a0a0a]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ff2095] animate-ping"></span>
-                <span>SSL &amp; Link Monitor</span>
-              </div>
             </div>
           </div>
         </div>
