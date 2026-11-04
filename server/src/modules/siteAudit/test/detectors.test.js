@@ -59,6 +59,19 @@ test('copyright: JS-injected year is flagged dynamic', () => {
   assert.equal(r.dynamic, true);
 });
 
+test('copyright: static start year with JS-injected current year is flagged dynamic and current', () => {
+  const r = detectCopyright(
+    page(
+      '<p>©2020 <span id="autodate"></span>. Karunya Institute. All Rights Reserved.</p>' +
+      '<script>document.getElementById("autodate").innerHTML = "-" + new Date().getFullYear();</script>'
+    ),
+    { currentYear: 2026 }
+  );
+  assert.equal(r.status, 'current');
+  assert.equal(r.year, 2026);
+  assert.equal(r.dynamic, true);
+});
+
 test('copyright: falls back to whole page when there is no footer', () => {
   const r = detectCopyright('<html><body><p>© 2023 Acme</p></body></html>', { currentYear: 2026 });
   assert.equal(r.year, 2023);

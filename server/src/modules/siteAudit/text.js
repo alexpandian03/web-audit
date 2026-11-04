@@ -26,9 +26,12 @@ export function parsePage(html) {
       return !(bodyText.length > 2000 && textOf($, el).length > bodyText.length * 0.5);
     });
   const footerText = footers.map((el) => textOf($, el)).join(' ').replace(/\s+/g, ' ').trim();
+  const footerScripts = footers
+    .map((el) => $(el).find('script').toArray().map((s) => $(s).html() || '').join('\n'))
+    .join('\n');
   const scripts = $('script')
     .toArray()
     .map((el) => $(el).html() || '')
     .join('\n');
-  return { $, footers, footerText, bodyText, scripts };
+  return { $, footers, footerText, footerScripts, bodyText, scripts };
 }

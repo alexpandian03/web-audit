@@ -68,7 +68,7 @@ function scan(text, maxYear) {
  *             text: string|null, source: 'footer'|'page'|null, dynamic: boolean }}
  */
 export function detectCopyright(html, { currentYear = new Date().getFullYear() } = {}) {
-  const { footerText, bodyText, scripts } = parsePage(html);
+  const { footerText, footerScripts, bodyText, scripts } = parsePage(html);
 
   const inFooter = scan(footerText, currentYear);
   let found = inFooter;
@@ -80,9 +80,9 @@ export function detectCopyright(html, { currentYear = new Date().getFullYear() }
     found.symbolSeen = found.symbolSeen || inFooter.symbolSeen;
   }
 
-  if (found.best) {
+  if (found.best && found.best.year >= currentYear) {
     return {
-      status: found.best.year >= currentYear ? 'current' : 'outdated',
+      status: 'current',
       year: found.best.year,
       text: found.best.text,
       source,
@@ -90,9 +90,28 @@ export function detectCopyright(html, { currentYear = new Date().getFullYear() }
     };
   }
 
-  // Year is probably injected by JavaScript: © symbol present, no static year, getFullYear() in a script.
-  if (found.symbolSeen && /getFullYear\s*\(/.test(scripts)) {
-    return { status: 'current', year: currentYear, text: null, source, dynamic: true };
+  // Year is probably injected by JavaScript:
+  // 1) © symbol present, no static year, getFullYear() in a script
+  // 2) OR an older start-year was found (e.g. "©2020 <span id='autodate'></span>"),
+  //    and a script dynamically injects getFullYear() into the page/footer
+  const isDynamicScript =
+    /getFullYear\s*\(/.test(footerScripts) ||
+    (found.symbolSeen && /(?:innerHTML|textContent|innerText|document\.write)\s*=[^;]*getFullYear\s*\(|getFullYear\s*\([^)]*\)[^;]*(?:innerHTML|textContent|innerText)/i.test(scripts)) ||
+    (!found.best && found.symbolSeen && /getFullYear\s*\(/.test(scripts));
+
+  if (isDynamicScript) {
+    const text = found.best?.text ? `${found.best.text} - ${currentYear}` : null;
+    return { status: 'current', year: currentYear, text, source, dynamic: true };
+  }
+
+  if (found.best) {
+    return {
+      status: 'outdated',
+      year: found.best.year,
+      text: found.best.text,
+      source,
+      dynamic: false,
+    };
   }
 
   // A copyright line exists but states no year, so there is nothing to compare with the current year.
