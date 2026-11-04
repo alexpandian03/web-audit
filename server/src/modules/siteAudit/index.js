@@ -2,9 +2,10 @@ import { fetchHtml, createClient } from './http.js';
 import { detectCopyright } from './copyright.js';
 import { detectDeveloper, normalizeDeveloperName } from './developer.js';
 import { checkSiteLinks } from './linkChecker.js';
+import { inspectSpa } from './spaAudit.js';
 import { parsePage } from './text.js';
 
-export { detectCopyright, detectDeveloper, normalizeDeveloperName, checkSiteLinks };
+export { detectCopyright, detectDeveloper, normalizeDeveloperName, checkSiteLinks, inspectSpa };
 
 
 const CHALLENGE = /captcha|robot check|are you a (?:human|robot)|verify (?:that )?you are (?:a )?human|access denied|just a moment|enable javascript and cookies|attention required|continue shopping/i;
@@ -50,12 +51,30 @@ export async function auditSite(url, opts = {}) {
     return { url, reachable: false, httpStatus: page.status, error: page.error, auditedAt: new Date() };
   }
 
-  const copyright = detectCopyright(page.html, { currentYear });
-  const developer = detectDeveloper(page.html);
+  let copyright = detectCopyright(page.html, { currentYear });
+  let developer = detectDeveloper(page.html);
   developer.normalizedName = normalizeDeveloperName(developer.name);
 
+  let warnings = detectWarnings(page.html);
+
+  // If the static HTML returned little content or missing copyright, attempt SPA introspection
+  if (warnings.includes('LITTLE_CONTENT') || copyright.status === 'missing') {
+    const spaInfo = await inspectSpa(page, { client, currentYear, timeout: Math.min(timeout, 5000) });
+    if (spaInfo?.isSpa) {
+      if (spaInfo.copyright && spaInfo.copyright.status !== 'missing') {
+        copyright = spaInfo.copyright;
+        warnings = warnings.filter((w) => w !== 'LITTLE_CONTENT');
+      }
+      if (spaInfo.developer && spaInfo.developer.kind !== 'none') {
+        developer = spaInfo.developer;
+      }
+      if (spaInfo.discoveredLinks?.length) {
+        page.extraLinks = spaInfo.discoveredLinks;
+      }
+    }
+  }
+
   // An unreadable page must not be reported as "missing".
-  const warnings = detectWarnings(page.html);
   if (warnings.length) {
     if (copyright.status === 'missing') copyright.status = 'unknown';
     if (developer.kind === 'none') developer.kind = 'unknown';

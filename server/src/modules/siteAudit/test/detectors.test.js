@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { detectCopyright, detectDeveloper } from '../index.js';
+import { detectCopyright, detectDeveloper, inspectSpa } from '../index.js';
 
 const page = (footer, body = '<h1>Hi</h1>') =>
   `<html><body>${body}<footer>${footer}</footer></body></html>`;
@@ -152,4 +152,53 @@ test('footer detection ignores a <body class="ehf-footer"> wrapper', () => {
 test('copyright: no_year text stops after "All Rights Reserved"', () => {
   const r = detectCopyright(page('<p>Copyrights All Rights Reserved</p><a>Facebook-f</a><a>Instagram</a>'), { currentYear: 2026 });
   assert.equal(r.text, 'Copyrights All Rights Reserved');
+});
+
+test('spaAudit: inspects bundle and layout API to detect copyright and links', async () => {
+  const fakeHtml = '<html><head><script type="module" src="/assets/index-123.js"></script></head><body><div id="root"></div></body></html>';
+  const mockClient = {
+    get: async (url) => {
+      if (url.includes('/assets/index-123.js')) {
+        return { data: 'const api = "/api/common-data"; const base = "https://api.hospital.com/";' };
+      }
+      if (url.includes('/api/common-data')) {
+        return {
+          data: {
+            footer_columns: [
+              { content: '© 2026 DoitinSTYL. All rights reserved.' },
+              { links: [{ url: '/about' }, { url: '/contact' }] },
+            ],
+          },
+        };
+      }
+      throw new Error('Not found');
+    },
+  };
+
+  const res = await inspectSpa({ html: fakeHtml, url: 'https://hospital.com/' }, { client: mockClient, currentYear: 2026 });
+  assert.equal(res.isSpa, true);
+  assert.equal(res.copyright?.status, 'current');
+  assert.equal(res.copyright?.year, 2026);
+  assert.equal(res.copyright?.text, '© 2026 DoitinSTYL. All rights reserved.');
+  assert.equal(res.copyright?.dynamic, true);
+  assert.ok(res.discoveredLinks.includes('/about'));
+  assert.ok(res.discoveredLinks.includes('/contact'));
+});
+
+test('spaAudit: extracts static copyright directly from bundle if no API', async () => {
+  const fakeHtml = '<html><head><script src="/main.js"></script></head><body><div id="app"></div></body></html>';
+  const mockClient = {
+    get: async (url) => {
+      if (url.includes('/main.js')) {
+        return { data: 'function App() { return jsx("footer", { children: "© 2026 TechCorp Inc." }); }' };
+      }
+      throw new Error('Not found');
+    },
+  };
+
+  const res = await inspectSpa({ html: fakeHtml, url: 'https://techcorp.com/' }, { client: mockClient, currentYear: 2026 });
+  assert.equal(res.isSpa, true);
+  assert.equal(res.copyright?.status, 'current');
+  assert.equal(res.copyright?.year, 2026);
+  assert.match(res.copyright?.text, /© 2026 TechCorp Inc/);
 });

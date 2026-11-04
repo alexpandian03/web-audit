@@ -124,10 +124,17 @@ export async function checkSiteLinks(startUrl, opts = {}) {
     status.set(url, { kind: 'ok', status: page.status, error: null });
     const $ = cheerio.load(page.html);
     const base = page.finalUrl || url;
-    return $('a[href]')
+    const links = $('a[href]')
       .toArray()
       .map((a) => normalize($(a).attr('href'), base))
       .filter(Boolean);
+    if (page.extraLinks?.length) {
+      for (const extra of page.extraLinks) {
+        const norm = normalize(extra, base);
+        if (norm) links.push(norm);
+      }
+    }
+    return links;
   };
 
   while (frontier.length && crawled.size < maxPages) {
