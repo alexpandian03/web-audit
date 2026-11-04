@@ -93,29 +93,27 @@ export function createSearchesRouter({
               provider: activeProvider,
             });
 
-            // Clone the site entries for this new search
+            // Clone the site entries for this new search with pending status so they are audited live
             const siteDocs = cachedSites.map((s) => ({
               searchId: search._id,
               name: s.name,
               address: s.address || '',
               url: s.url,
-              auditStatus: s.auditStatus || 'pending',
-              audit: s.audit || null,
-              brokenCertainCount: s.brokenCertainCount ?? 0,
-              brokenTotalCount: s.brokenTotalCount ?? 0,
-              sslIssueCount: s.sslIssueCount ?? 0,
-              auditedAt: s.auditedAt || null,
+              auditStatus: 'pending',
+              audit: null,
+              brokenCertainCount: 0,
+              brokenTotalCount: 0,
+              sslIssueCount: 0,
+              auditedAt: null,
             }));
 
             const sites = await Site.insertMany(siteDocs);
 
-            // Re-queue any non-done sites in the background
+            // Re-audit every site live from the website
             for (const site of sites) {
-              if (site.auditStatus !== 'done') {
-                enqueueSiteAudit(site._id, { allowPrivate }).catch((err) => {
-                  console.error(`[Queue] Background audit error for cached site ${site._id}:`, err.message);
-                });
-              }
+              enqueueSiteAudit(site._id, { allowPrivate, reaudit: true }).catch((err) => {
+                console.error(`[Queue] Background audit error for cached site ${site._id}:`, err.message);
+              });
             }
 
             return res.status(201).json({ search, sites, cached: true });
@@ -153,9 +151,9 @@ export function createSearchesRouter({
 
       const sites = siteDocs.length > 0 ? await Site.insertMany(siteDocs) : [];
 
-      // 6. Trigger background audits
+      // 6. Trigger background audits live from the actual websites
       for (const site of sites) {
-        enqueueSiteAudit(site._id, { allowPrivate }).catch((err) => {
+        enqueueSiteAudit(site._id, { allowPrivate, reaudit: true }).catch((err) => {
           console.error(`[Queue] Error running audit for site ${site._id}:`, err.message);
         });
       }
