@@ -23,11 +23,27 @@ function scan(text, maxYear) {
   let best = null;
   let symbolSeen = false;
   let statement = null; // a copyright line that has no year in it
+
   for (const m of text.matchAll(SYMBOL)) {
     symbolSeen = true;
-    const start = Math.max(0, m.index - 15);
-    const window = text.slice(start, m.index + 90);
-    const years = yearsIn(window, maxYear);
+
+    // 1. Look for year AFTER the symbol first (standard: "© 2026", "Copyright 2020-2026")
+    const afterWindow = text.slice(m.index, m.index + 90);
+    let years = yearsIn(afterWindow, maxYear);
+    let snippet = afterWindow;
+
+    // 2. Only if no year follows the symbol, check if year preceded it (e.g. "2026 © Acme")
+    if (!years.length) {
+      const start = Math.max(0, m.index - 15);
+      const beforeWindow = text.slice(start, m.index);
+      const beforeYears = yearsIn(beforeWindow, maxYear);
+      if (beforeYears.length) {
+        years = beforeYears;
+        snippet = text.slice(start, m.index + 90);
+        if (start > 0) snippet = snippet.replace(/^\S*\s/, ''); // drop partial leading word
+      }
+    }
+
     if (!years.length) {
       if (!statement && m[0] !== '(c)' && m[0] !== '(C)') {
         const raw = text.slice(m.index, m.index + 80);
@@ -36,13 +52,13 @@ function scan(text, maxYear) {
       }
       continue;
     }
+
     const year = Math.max(...years);
     if (!best || year > best.year) {
-      let snippet = window;
-      if (start > 0) snippet = snippet.replace(/^\S*\s/, ''); // drop partial word
       best = { year, text: snippet.trim() };
     }
   }
+
   return { best, symbolSeen, statement };
 }
 

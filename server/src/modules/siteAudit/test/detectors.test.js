@@ -34,6 +34,16 @@ test('copyright: year before the symbol ("2026 © Acme")', () => {
   assert.equal(r.year, 2026);
 });
 
+test('copyright: ignores unrelated promotional years preceding symbol', () => {
+  const r = detectCopyright(
+    page('Admissions Open 2027 ©2020 -2026. Karunya Institute of Technology and Sciences. All Rights Reserved.'),
+    { currentYear: 2026 }
+  );
+  assert.equal(r.year, 2026);
+  assert.equal(r.status, 'current');
+  assert.match(r.text, /^©2020 -2026/);
+});
+
 test('copyright: missing', () => {
   const r = detectCopyright(page('Contact us at hello@acme.com'), { currentYear: 2026 });
   assert.equal(r.status, 'missing');
