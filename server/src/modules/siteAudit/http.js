@@ -1,7 +1,7 @@
 import axios from 'axios';
 import net from 'node:net';
 
-const USER_AGENT = 'Mozilla/5.0 (compatible; SiteAuditBot/1.0)';
+const USER_AGENT = 'SiteAuditBot/1.0 (+https://web-audit-three.vercel.app/bot)';
 
 /** Shared axios client. Never throws on HTTP status; only on network errors. */
 export function createClient({ timeout = 10000 } = {}) {

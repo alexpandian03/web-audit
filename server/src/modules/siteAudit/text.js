@@ -1,13 +1,16 @@
 import * as cheerio from 'cheerio';
 
-/** Visible text of an element, with spaces between sibling nodes. */
+/** Visible text of an element, with spaces between sibling nodes and separators at block boundaries. */
 export function textOf($, el) {
   const clone = $(el).clone();
   clone.find('script,style,noscript,template').remove();
+  clone.find('p, div, section, article, aside, li, tr, h1, h2, h3, h4, h5, h6, br').each((_, n) => {
+    $(n).append(' | ');
+  });
   clone.find('*').each((_, n) => {
     $(n).prepend(' ').append(' ');
   });
-  return clone.text().replace(/\s+/g, ' ').trim();
+  return clone.text().replace(/\s+/g, ' ').replace(/(?:\s*\|\s*)+/g, ' | ').trim();
 }
 
 const FOOTER_SELECTOR =
